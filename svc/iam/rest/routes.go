@@ -10,7 +10,8 @@ import (
 
 func getFilter() *restkit.ErrorFilter {
 	return restkit.NewErrorFilter(restkit.ErrorMap{
-		iam.ErrAccountExists: http.StatusConflict,
+		iam.ErrAccountExists:   http.StatusConflict,
+		iam.ErrAccountNotFOund: http.StatusNotFound,
 	})
 }
 
@@ -28,6 +29,18 @@ func Route(svc app.Service) http.Handler {
 		ad, err := svc.CreateAccount(r.Context(), input)
 		if !errFilter.WriteIfError(w, err) {
 			_ = restkit.WriteResponseJson(w, http.StatusCreated, ad)
+		}
+	})
+
+	mux.HandleFunc("POST /api/iam/v1/authenticate", func(w http.ResponseWriter, r *http.Request) {
+		var creds iam.Credentials
+		if errFilter.WriteIfError(w, restkit.ReadRequestBody(r, &creds)) {
+			return
+		}
+
+		ad, err := svc.Authenticate(r.Context(), creds)
+		if !errFilter.WriteIfError(w, err) {
+			_ = restkit.WriteResponseJson(w, http.StatusOK, ad)
 		}
 	})
 

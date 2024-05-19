@@ -34,3 +34,26 @@ func Test_Service_CreateAccount(t *testing.T) {
 	assert.Equal(t, token, ad.Token)
 	assert.NotEmpty(t, ad.Identity.AccountId)
 }
+
+func Test_Service_Authenticate(t *testing.T) {
+	ctx := context.Background()
+	token := "testToken"
+	idn := testiam.NewIdentity()
+	creds := testiam.NewCredentials()
+
+	mockctl := gomock.NewController(t)
+	defer mockctl.Finish()
+
+	db := mockstore.NewMockDB(mockctl)
+	issuer := mockauthn.NewMockTokenIssuer(mockctl)
+
+	db.EXPECT().FindAccountByCredentials(ctx, creds).Return(&idn, nil)
+	issuer.EXPECT().IssueToken(gomock.Any()).Return(token, nil)
+
+	svc := NewService(slog.Default(), db, issuer)
+	ad, err := svc.Authenticate(ctx, creds)
+
+	assert.NoError(t, err)
+	assert.Equal(t, token, ad.Token)
+	assert.NotEmpty(t, ad.Identity.AccountId)
+}

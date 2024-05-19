@@ -70,4 +70,13 @@ func Test_AccountCreation(t *testing.T) {
 
 	assert.NotEmpty(t, result.Token)
 	assert.NotEmpty(t, result.Identity.AccountId)
+
+	req, _ = restkit.NewJsonRequest(http.MethodPost, apiUrl(t, "/api/iam/v1/authenticate"), &input.Credentials)
+	res, err = client.Do(req)
+	require.NoError(t, err)
+
+	require.Equal(t, http.StatusOK, res.StatusCode)
+	require.NoError(t, restkit.ReadJsonResponse(res, &result))
+	assert.NotEmpty(t, result.Token)
+	assert.NotEmpty(t, result.Identity.AccountId)
 }

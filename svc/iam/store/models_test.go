@@ -23,3 +23,16 @@ func Test_Account_FromInput(t *testing.T) {
 	assert.Equal(t, idn.LastName, m.LastName)
 	assert.Equal(t, creds.Password, m.Password)
 }
+
+func Test_Identity_ToIdentity(t *testing.T) {
+	idn := testiam.NewIdentity()
+	m := identity{
+		Id:        idn.AccountId,
+		CreatedAt: time.Now(),
+		Email:     idn.Email,
+		FirstName: idn.FirstName,
+		LastName:  idn.LastName,
+	}
+
+	assert.Equal(t, idn, m.ToIdentity())
+}

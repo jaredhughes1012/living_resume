@@ -17,6 +17,9 @@ type Service interface {
 	// Creates a new account
 	CreateAccount(ctx context.Context, input iam.AccountInput) (*iam.AuthData, error)
 
+	// Locates an account by credentials and authenticates that identity
+	Authenticate(ctx context.Context, creds iam.Credentials) (*iam.AuthData, error)
+
 	// Performs all setup required for the service before running
 	Setup(ctx context.Context, force bool) error
 }
@@ -27,15 +30,27 @@ type svc struct {
 	issuer authn.TokenIssuer
 }
 
-// Setup implements Service.
-func (s *svc) Setup(ctx context.Context, force bool) error {
-	if force {
-		if err := s.db.MigrateDown(ctx); err != nil {
-			return err
-		}
+// Authenticate implements Service.
+func (s *svc) Authenticate(ctx context.Context, creds iam.Credentials) (*iam.AuthData, error) {
+	log := s.log.With("email", creds.Email)
+
+	log.Debug("Locating account")
+	idn, err := s.db.FindAccountByCredentials(ctx, creds)
+	if err != nil {
+		return nil, err
 	}
 
-	return s.db.MigrateUp(ctx)
+	log.Debug("Issuing auth token")
+	token, err := s.issuer.IssueToken(*idn)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Info("Account authenticated successfully")
+	return &iam.AuthData{
+		Token:    token,
+		Identity: *idn,
+	}, nil
 }
 
 // CreateAccount implements Service.
@@ -62,6 +77,17 @@ func (s *svc) CreateAccount(ctx context.Context, input iam.AccountInput) (*iam.A
 		Token:    token,
 		Identity: idn,
 	}, nil
+}
+
+// Setup implements Service.
+func (s *svc) Setup(ctx context.Context, force bool) error {
+	if force {
+		if err := s.db.MigrateDown(ctx); err != nil {
+			return err
+		}
+	}
+
+	return s.db.MigrateUp(ctx)
 }
 
 func NewService(log *slog.Logger, db store.DB, issuer authn.TokenIssuer) Service {

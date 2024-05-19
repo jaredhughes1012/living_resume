@@ -3,7 +3,8 @@ package iam
 import "errors"
 
 var (
-	ErrAccountExists = errors.New("account already exists")
+	ErrAccountExists   = errors.New("account already exists")
+	ErrAccountNotFOund = errors.New("account not found")
 )
 
 // Represents who a user is and what they can do
