@@ -1,13 +1,15 @@
-import { extendTheme } from "@chakra-ui/react";
+import { createTheme } from "@mui/material";
 
-const theme = extendTheme({
-  colors: {
-    brand: {
-      900: "#1a365d",
-      800: "#153e75",
-      700: "#2a69ac",
-    }
-  }
+const theme = createTheme({
+  palette: {
+    mode: "dark",
+    primary: {
+      main: "#1a237e",
+    },
+    secondary: {
+      main: "#ff1744",
+    },
+  },
 });
 
 export default theme;
