@@ -31,8 +31,8 @@ func NewIdentity() iam.Identity {
 }
 
 // Creates a new test AuthData
-func NewAuthData() iam.AuthData {
-	return iam.AuthData{
+func NewAuthData() *iam.AuthData {
+	return &iam.AuthData{
 		Token:    "testToken",
 		Identity: NewIdentity(),
 	}

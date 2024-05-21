@@ -1,8 +1,9 @@
-package app
+package rest
 
 import (
 	"context"
 	"log/slog"
+	"os"
 
 	"github.com/jaredhughes1012/living_resume/svc/iam"
 	"github.com/jaredhughes1012/living_resume/svc/iam/authn"
@@ -10,7 +11,7 @@ import (
 	"github.com/satori/uuid"
 )
 
-//go:generate mockgen -destination=./mockapp/service.go -package=mockapp -source=./service.go Service
+//go:generate mockgen -destination=./mockrest/service.go -package=mockrest -source=./service.go Service
 
 // Executes logic for the IAM service
 type Service interface {
@@ -37,7 +38,7 @@ func (s *svc) Authenticate(ctx context.Context, creds iam.Credentials) (*iam.Aut
 	log.Debug("Locating account")
 	idn, err := s.db.FindAccountByCredentials(ctx, creds)
 	if err != nil {
-		return nil, err
+		return nil, iam.ErrAccountNotFound
 	}
 
 	log.Debug("Issuing auth token")
@@ -69,7 +70,7 @@ func (s *svc) CreateAccount(ctx context.Context, input iam.AccountInput) (*iam.A
 
 	log.Debug("Committing transaction")
 	if err := s.db.Save(ctx); err != nil {
-		return nil, err
+		return nil, iam.ErrAccountExists
 	}
 
 	log.Info("Account created successfully")
@@ -96,4 +97,15 @@ func NewService(log *slog.Logger, db store.DB, issuer authn.TokenIssuer) Service
 		db:     db,
 		issuer: issuer,
 	}
+}
+
+// Creates a new service using standard configuration
+func StandardService() (Service, error) {
+	db, err := store.NewDB(os.Getenv("POSTGRES_CONNSTR"), os.Getenv("IAM_MIGRATIONS_DIR"))
+	if err != nil {
+		return nil, err
+	}
+
+	issuer := authn.NewJwtTokenIssuer([]byte(os.Getenv("JWT_SECRET")))
+	return NewService(slog.Default(), db, issuer), nil
 }

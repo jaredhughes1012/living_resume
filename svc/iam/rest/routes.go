@@ -4,19 +4,18 @@ import (
 	"net/http"
 
 	"github.com/jaredhughes1012/living_resume/svc/iam"
-	"github.com/jaredhughes1012/living_resume/svc/iam/app"
 	"github.com/jaredhughes1012/restkit"
 )
 
 func getFilter() *restkit.ErrorFilter {
 	return restkit.NewErrorFilter(restkit.ErrorMap{
 		iam.ErrAccountExists:   http.StatusConflict,
-		iam.ErrAccountNotFOund: http.StatusNotFound,
+		iam.ErrAccountNotFound: http.StatusNotFound,
 	})
 }
 
 // Creates a router with all of the IAM service routes
-func Route(svc app.Service) http.Handler {
+func Route(svc Service) http.Handler {
 	mux := http.NewServeMux()
 	errFilter := getFilter()
 

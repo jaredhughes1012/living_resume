@@ -1,50 +1,113 @@
 package rest
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/jaredhughes1012/living_resume/svc/iam"
-	"github.com/jaredhughes1012/living_resume/svc/iam/app"
-	"github.com/jaredhughes1012/living_resume/svc/iam/app/mockapp"
+	"github.com/jaredhughes1012/living_resume/svc/iam/rest/mockrest"
 	"github.com/jaredhughes1012/living_resume/svc/iam/testiam"
 	"github.com/jaredhughes1012/restkit/testrestkit"
 	"github.com/stretchr/testify/assert"
 )
 
-func runTestRequest(svc app.Service, r *http.Request) *httptest.ResponseRecorder {
-	w := httptest.NewRecorder()
-	Route(svc).ServeHTTP(w, r)
-	return w
-}
+func Test_CreateAccount(t *testing.T) {
+	cases := []struct {
+		name           string
+		ad             *iam.AuthData
+		err            error
+		expectedStatus int
+	}{
+		{
+			name:           "success",
+			ad:             testiam.NewAuthData(),
+			err:            nil,
+			expectedStatus: http.StatusCreated,
+		},
+		{
+			name:           "conflict",
+			ad:             nil,
+			err:            iam.ErrAccountExists,
+			expectedStatus: http.StatusConflict,
+		},
+		{
+			name:           "internal error",
+			ad:             nil,
+			err:            errors.New("unknown error"),
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
 
-func Test_CreateAccount_Success(t *testing.T) {
 	// Arrange
 	input := testiam.NewAccountInput()
-	ad := testiam.NewAuthData()
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			mockctl := gomock.NewController(t)
+			defer mockctl.Finish()
+			svc := mockrest.NewMockService(mockctl)
 
-	mockctl := gomock.NewController(t)
-	defer mockctl.Finish()
-	svc := mockapp.NewMockService(mockctl)
+			svc.EXPECT().CreateAccount(gomock.Any(), input).Return(c.ad, c.err)
+			w := httptest.NewRecorder()
+			r := testrestkit.NewJsonRequest(t, http.MethodPost, "/api/iam/v1/accounts", &input)
+			Route(svc).ServeHTTP(w, r)
 
-	svc.EXPECT().CreateAccount(gomock.Any(), input).Return(&ad, nil)
-
-	w := runTestRequest(svc, testrestkit.NewJsonRequest(t, http.MethodPost, "/api/iam/v1/accounts", &input))
-	result := testrestkit.RequireJsonResponse[iam.AuthData](t, w, http.StatusCreated)
-	assert.Equal(t, ad, result)
+			assert.Equal(t, c.expectedStatus, w.Code)
+			if c.err == nil {
+				result := testrestkit.RequireJsonResponse[iam.AuthData](t, w.Result(), c.expectedStatus)
+				assert.Equal(t, *c.ad, result)
+			}
+		})
+	}
 }
 
-func Test_CreateAccount_Conflict(t *testing.T) {
-	input := testiam.NewAccountInput()
+func Test_Authenticate(t *testing.T) {
+	cases := []struct {
+		name           string
+		ad             *iam.AuthData
+		err            error
+		expectedStatus int
+	}{
+		{
+			name:           "success",
+			ad:             testiam.NewAuthData(),
+			err:            nil,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "not found",
+			ad:             nil,
+			err:            iam.ErrAccountNotFound,
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name:           "internal error",
+			ad:             nil,
+			err:            errors.New("unknown error"),
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
 
-	mockctl := gomock.NewController(t)
-	defer mockctl.Finish()
-	svc := mockapp.NewMockService(mockctl)
+	// Arrange
+	creds := testiam.NewCredentials()
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			mockctl := gomock.NewController(t)
+			defer mockctl.Finish()
+			svc := mockrest.NewMockService(mockctl)
 
-	svc.EXPECT().CreateAccount(gomock.Any(), input).Return(nil, iam.ErrAccountExists)
+			svc.EXPECT().Authenticate(gomock.Any(), creds).Return(c.ad, c.err)
+			w := httptest.NewRecorder()
+			r := testrestkit.NewJsonRequest(t, http.MethodPost, "/api/iam/v1/authenticate", &creds)
+			Route(svc).ServeHTTP(w, r)
 
-	w := runTestRequest(svc, testrestkit.NewJsonRequest(t, http.MethodPost, "/api/iam/v1/accounts", &input))
-	assert.Equal(t, http.StatusConflict, w.Code)
+			assert.Equal(t, c.expectedStatus, w.Code)
+			if c.err == nil {
+				result := testrestkit.RequireJsonResponse[iam.AuthData](t, w.Result(), c.expectedStatus)
+				assert.Equal(t, *c.ad, result)
+			}
+		})
+	}
 }

@@ -5,33 +5,25 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"os"
 	"testing"
 
 	"github.com/jaredhughes1012/living_resume/svc/iam"
 	"github.com/jaredhughes1012/living_resume/svc/iam/rest"
 	"github.com/jaredhughes1012/living_resume/svc/iam/testiam"
-	"github.com/jaredhughes1012/restkit"
+	"github.com/jaredhughes1012/restkit/testrestkit"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var client *http.Client
-var baseUrl *url.URL
+var baseUrl string
 var runId string
-
-func apiUrl(t *testing.T, path string) string {
-	uPath, err := url.Parse(path)
-	require.NoError(t, err)
-
-	return baseUrl.ResolveReference(uPath).String()
-}
 
 // Starts up the service and configures a client for testing
 func TestMain(m *testing.M) {
-	svc, err := rest.NewService()
+	svc, err := rest.StandardService()
 	if err != nil {
 		panic(err)
 	} else if err = svc.Setup(context.Background(), true); err != nil {
@@ -42,10 +34,7 @@ func TestMain(m *testing.M) {
 	client = server.Client()
 	defer server.Close()
 
-	baseUrl, err = url.Parse(server.URL)
-	if err != nil {
-		panic(err)
-	}
+	baseUrl = server.URL
 
 	runId = os.Getenv("RUN_ID")
 	if runId == "" {
@@ -57,26 +46,37 @@ func TestMain(m *testing.M) {
 
 func Test_AccountCreation(t *testing.T) {
 	input := testiam.NewAccountInput()
-	input.Credentials.Email = fmt.Sprintf("%s@test.com", runId)
+	input.Credentials.Email = fmt.Sprintf("%s-1@test.com", runId)
 	input.Credentials.Password = "P4ssw0rd!13"
 
-	req, _ := restkit.NewJsonRequest(http.MethodPost, apiUrl(t, "/api/iam/v1/accounts"), &input)
-	res, err := client.Do(req)
-	require.NoError(t, err)
+	res := testrestkit.DoJsonRequest(t, client, http.MethodPost, testrestkit.ApiUrl(t, baseUrl, "/api/iam/v1/accounts"), &input)
+	result := testrestkit.RequireJsonResponse[iam.AuthData](t, res, http.StatusCreated)
+	assert.NotEmpty(t, result.Token)
+	assert.NotEmpty(t, result.Identity.AccountId)
 
-	var result iam.AuthData
+	res = testrestkit.DoJsonRequest(t, client, http.MethodPost, testrestkit.ApiUrl(t, baseUrl, "/api/iam/v1/authenticate"), &input.Credentials)
+	result = testrestkit.RequireJsonResponse[iam.AuthData](t, res, http.StatusOK)
+	assert.NotEmpty(t, result.Token)
+	assert.NotEmpty(t, result.Identity.AccountId)
+}
+
+func Test_AccountCreation_Conflict(t *testing.T) {
+	input := testiam.NewAccountInput()
+	input.Credentials.Email = fmt.Sprintf("%s-2@test.com", runId)
+	input.Credentials.Password = "P4ssw0rd!13"
+
+	res := testrestkit.DoJsonRequest(t, client, http.MethodPost, testrestkit.ApiUrl(t, baseUrl, "/api/iam/v1/accounts"), &input)
 	require.Equal(t, http.StatusCreated, res.StatusCode)
-	require.NoError(t, restkit.ReadJsonResponse(res, &result))
 
-	assert.NotEmpty(t, result.Token)
-	assert.NotEmpty(t, result.Identity.AccountId)
+	res = testrestkit.DoJsonRequest(t, client, http.MethodPost, testrestkit.ApiUrl(t, baseUrl, "/api/iam/v1/accounts"), &input)
+	assert.Equal(t, http.StatusConflict, res.StatusCode)
+}
 
-	req, _ = restkit.NewJsonRequest(http.MethodPost, apiUrl(t, "/api/iam/v1/authenticate"), &input.Credentials)
-	res, err = client.Do(req)
-	require.NoError(t, err)
+func Test_Authenticate_NotFound(t *testing.T) {
+	creds := testiam.NewCredentials()
+	creds.Email = fmt.Sprintf("%s-notFound@test.com", runId)
+	creds.Password = "P4ssw0rd!13"
 
-	require.Equal(t, http.StatusOK, res.StatusCode)
-	require.NoError(t, restkit.ReadJsonResponse(res, &result))
-	assert.NotEmpty(t, result.Token)
-	assert.NotEmpty(t, result.Identity.AccountId)
+	res := testrestkit.DoJsonRequest(t, client, http.MethodPost, testrestkit.ApiUrl(t, baseUrl, "/api/iam/v1/authenticate"), &creds)
+	require.Equal(t, http.StatusNotFound, res.StatusCode)
 }

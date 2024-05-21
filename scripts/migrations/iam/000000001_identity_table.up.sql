@@ -5,5 +5,7 @@ CREATE TABLE identity(
   password TEXT NOT NULL,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
-  created_at TIMESTAMP NOT NULL
+  created_at TIMESTAMP NOT NULL,
+
+  UNIQUE(email)
 );

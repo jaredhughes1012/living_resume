@@ -4,7 +4,7 @@ import "errors"
 
 var (
 	ErrAccountExists   = errors.New("account already exists")
-	ErrAccountNotFOund = errors.New("account not found")
+	ErrAccountNotFound = errors.New("account not found")
 )
 
 // Represents who a user is and what they can do
@@ -28,4 +28,27 @@ func (idn Identity) ToClaims() map[string]any {
 type AuthData struct {
 	Token    string   `json:"token"`
 	Identity Identity `json:"identity"`
+}
+
+// Data used to verify a user's identity
+type Credentials struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+// Creates a new account
+type AccountInput struct {
+	FirstName   string      `json:"firstName"`
+	LastName    string      `json:"lastName"`
+	Credentials Credentials `json:"credentials"`
+}
+
+// Converts this input into an Identity
+func (input AccountInput) ToIdentity(acctId string) Identity {
+	return Identity{
+		AccountId: acctId,
+		Email:     input.Credentials.Email,
+		FirstName: input.FirstName,
+		LastName:  input.LastName,
+	}
 }
