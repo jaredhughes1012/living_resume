@@ -1,10 +1,19 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, redirect } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
+import SignupPage from "@pages/SignupPage";
 
 const router = createBrowserRouter([
   {
-    path: "/",
+    path: "/jared-hughes",
     element: <LandingPage />
+  },
+  {
+    path: "/signup",
+    element: <SignupPage />
+  },
+  {
+    path: "*",
+    loader: () => redirect("/jared-hughes"),
   }
 ]);
 
