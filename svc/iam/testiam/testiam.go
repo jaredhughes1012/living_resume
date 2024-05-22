@@ -11,12 +11,20 @@ func NewCredentials() iam.Credentials {
 	}
 }
 
+// Creates a new test IdentityInput
+func NewIdentityInput() iam.IdentityInput {
+	return iam.IdentityInput{
+		ActivationCode: "activationCode",
+		FirstName:      "firstName",
+		LastName:       "lastName",
+		Credentials:    NewCredentials(),
+	}
+}
+
 // Creates a new test AccountInput
-func NewAccountInput() iam.AccountInput {
-	return iam.AccountInput{
-		FirstName:   "firstName",
-		LastName:    "lastName",
-		Credentials: NewCredentials(),
+func NewAccountInput() *iam.AccountInput {
+	return &iam.AccountInput{
+		Email: "test@test.com",
 	}
 }
 
@@ -35,5 +43,11 @@ func NewAuthData() *iam.AuthData {
 	return &iam.AuthData{
 		Token:    "testToken",
 		Identity: NewIdentity(),
+	}
+}
+
+func NewActivationCode() *iam.ActivationCode {
+	return &iam.ActivationCode{
+		Code: "testCode",
 	}
 }

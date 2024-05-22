@@ -9,8 +9,9 @@ import (
 
 func getFilter() *restkit.ErrorFilter {
 	return restkit.NewErrorFilter(restkit.ErrorMap{
-		iam.ErrAccountExists:   http.StatusConflict,
-		iam.ErrAccountNotFound: http.StatusNotFound,
+		iam.ErrAccountExists:     http.StatusConflict,
+		iam.ErrAccountNotFound:   http.StatusNotFound,
+		iam.ErrActivationExpired: http.StatusNotFound,
 	})
 }
 
@@ -19,8 +20,26 @@ func Route(svc Service) http.Handler {
 	mux := http.NewServeMux()
 	errFilter := getFilter()
 
-	mux.HandleFunc("POST /api/iam/v1/accounts", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("POST /api/iam/v1/accounts/initiate", func(w http.ResponseWriter, r *http.Request) {
+		debug := r.URL.Query().Get("debug") == "true"
+
 		var input iam.AccountInput
+		if errFilter.WriteIfError(w, restkit.ReadRequestBody(r, &input)) {
+			return
+		}
+
+		ac, err := svc.InitiateAccountCreation(r.Context(), input)
+		if errFilter.WriteIfError(w, err) {
+			return
+		} else if debug {
+			_ = restkit.WriteResponseJson(w, http.StatusOK, ac)
+		} else {
+			w.WriteHeader(http.StatusAccepted)
+		}
+	})
+
+	mux.HandleFunc("POST /api/iam/v1/accounts", func(w http.ResponseWriter, r *http.Request) {
+		var input iam.IdentityInput
 		if errFilter.WriteIfError(w, restkit.ReadRequestBody(r, &input)) {
 			return
 		}

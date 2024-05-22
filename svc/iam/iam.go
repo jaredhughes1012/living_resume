@@ -3,8 +3,10 @@ package iam
 import "errors"
 
 var (
-	ErrAccountExists   = errors.New("account already exists")
-	ErrAccountNotFound = errors.New("account not found")
+	ErrAccountExists     = errors.New("account already exists")
+	ErrAccountNotFound   = errors.New("account not found")
+	ErrActivationExpired = errors.New("activation code expired")
+	ErrMismatchedCode    = errors.New("wrong email provided for activation code")
 )
 
 // Represents who a user is and what they can do
@@ -37,18 +39,31 @@ type Credentials struct {
 }
 
 // Creates a new account
-type AccountInput struct {
-	FirstName   string      `json:"firstName"`
-	LastName    string      `json:"lastName"`
-	Credentials Credentials `json:"credentials"`
+type IdentityInput struct {
+	ActivationCode string      `json:"activationCode"`
+	AccountId      string      `json:"accountId"`
+	FirstName      string      `json:"firstName"`
+	LastName       string      `json:"lastName"`
+	Credentials    Credentials `json:"credentials"`
 }
 
 // Converts this input into an Identity
-func (input AccountInput) ToIdentity(acctId string) Identity {
+func (input IdentityInput) ToIdentity() Identity {
 	return Identity{
-		AccountId: acctId,
+		AccountId: input.AccountId,
 		Email:     input.Credentials.Email,
 		FirstName: input.FirstName,
 		LastName:  input.LastName,
 	}
+}
+
+// Input used to begin creating an account
+type AccountInput struct {
+	Email string `json:"email"`
+}
+
+// Activation code used to verify an account
+type ActivationCode struct {
+	Code string `json:"code"`
+	Url  string `json:"url"`
 }

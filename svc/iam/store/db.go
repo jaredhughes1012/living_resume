@@ -22,6 +22,9 @@ type DB interface {
 	// Locates an account by credentials
 	FindAccountByCredentials(ctx context.Context, creds iam.Credentials) (*iam.Identity, error)
 
+	// Locates an account by its email address
+	FindAccountByEmail(ctx context.Context, email string) (*iam.Identity, error)
+
 	// Rolls back all migrations for this DB
 	MigrateDown(ctx context.Context) error
 
@@ -36,6 +39,17 @@ type postgresDb struct {
 	db            *sql.DB
 	accounts      []identity
 	migrationsDir string
+}
+
+// FindAccountByEmail implements DB.
+func (p *postgresDb) FindAccountByEmail(ctx context.Context, email string) (*iam.Identity, error) {
+	var m identity
+	if err := m.findByEmail(ctx, p.db, email); err != nil {
+		return nil, err
+	}
+
+	idn := m.ToIdentity()
+	return &idn, nil
 }
 
 // FindAccountByCredentials implements DB.

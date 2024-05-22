@@ -76,3 +76,20 @@ func (m *identity) findByCredentials(ctx context.Context, db *sql.DB, creds iam.
 		&m.LastName,
 	)
 }
+
+func (m *identity) findByEmail(ctx context.Context, db *sql.DB, email string) error {
+	const query = `
+    SELECT id, created_at, email, password, first_name, last_name
+    FROM identity
+    WHERE email = $1
+  `
+
+	return db.QueryRowContext(ctx, query, email).Scan(
+		&m.Id,
+		&m.CreatedAt,
+		&m.Email,
+		&m.Password,
+		&m.FirstName,
+		&m.LastName,
+	)
+}

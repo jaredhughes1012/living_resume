@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -14,7 +15,6 @@ import (
 	"github.com/jaredhughes1012/restkit/testrestkit"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var client *http.Client
@@ -23,10 +23,12 @@ var runId string
 
 // Starts up the service and configures a client for testing
 func TestMain(m *testing.M) {
-	svc, err := rest.StandardService()
+	slog.SetLogLoggerLevel(slog.LevelDebug)
+	ctx := context.Background()
+	svc, err := rest.StandardService(ctx)
 	if err != nil {
 		panic(err)
-	} else if err = svc.Setup(context.Background(), true); err != nil {
+	} else if err = svc.Setup(ctx, true); err != nil {
 		panic(err)
 	}
 
@@ -43,40 +45,54 @@ func TestMain(m *testing.M) {
 
 	os.Exit(m.Run())
 }
-
 func Test_AccountCreation(t *testing.T) {
 	input := testiam.NewAccountInput()
-	input.Credentials.Email = fmt.Sprintf("%s-1@test.com", runId)
-	input.Credentials.Password = "P4ssw0rd!13"
+	input.Email = fmt.Sprintf("%s-3@test.com", runId)
 
-	res := testrestkit.DoJsonRequest(t, client, http.MethodPost, testrestkit.ApiUrl(t, baseUrl, "/api/iam/v1/accounts"), &input)
+	res := testrestkit.DoJsonRequest(t, client, http.MethodPost, testrestkit.ApiUrl(t, baseUrl, "/api/iam/v1/accounts/initiate?debug=true"), &input)
+	code := testrestkit.RequireJsonResponse[iam.ActivationCode](t, res, http.StatusOK)
+
+	idnInput := testiam.NewIdentityInput()
+	idnInput.AccountId = runId
+	idnInput.Credentials.Email = input.Email
+	idnInput.Credentials.Password = "P4ssw0rd!13"
+	idnInput.ActivationCode = code.Code
+	idnInput.FirstName = fmt.Sprintf("First-%s", runId)
+	idnInput.LastName = fmt.Sprintf("Last-%s", runId)
+
+	res = testrestkit.DoJsonRequest(t, client, http.MethodPost, testrestkit.ApiUrl(t, baseUrl, "/api/iam/v1/accounts"), &idnInput)
 	result := testrestkit.RequireJsonResponse[iam.AuthData](t, res, http.StatusCreated)
+
 	assert.NotEmpty(t, result.Token)
 	assert.NotEmpty(t, result.Identity.AccountId)
 
-	res = testrestkit.DoJsonRequest(t, client, http.MethodPost, testrestkit.ApiUrl(t, baseUrl, "/api/iam/v1/authenticate"), &input.Credentials)
+	// Make sure account cannot be duplicated
+	res = testrestkit.DoJsonRequest(t, client, http.MethodPost, testrestkit.ApiUrl(t, baseUrl, "/api/iam/v1/accounts/initiate?debug=true"), &input)
+	assert.Equal(t, http.StatusConflict, res.StatusCode)
+
+	// Make sure account can be authenticated
+	res = testrestkit.DoJsonRequest(t, client, http.MethodPost, testrestkit.ApiUrl(t, baseUrl, "/api/iam/v1/authenticate"), &idnInput.Credentials)
 	result = testrestkit.RequireJsonResponse[iam.AuthData](t, res, http.StatusOK)
+
 	assert.NotEmpty(t, result.Token)
 	assert.NotEmpty(t, result.Identity.AccountId)
 }
 
-func Test_AccountCreation_Conflict(t *testing.T) {
-	input := testiam.NewAccountInput()
-	input.Credentials.Email = fmt.Sprintf("%s-2@test.com", runId)
-	input.Credentials.Password = "P4ssw0rd!13"
+func Test_AccountCreation_NoCode(t *testing.T) {
+	idnInput := testiam.NewIdentityInput()
+	idnInput.Credentials.Email = fmt.Sprintf("%s-notFound1@test.com", runId)
+	idnInput.Credentials.Password = "P4ssw0rd!13"
+	idnInput.ActivationCode = "notFoundCode"
 
-	res := testrestkit.DoJsonRequest(t, client, http.MethodPost, testrestkit.ApiUrl(t, baseUrl, "/api/iam/v1/accounts"), &input)
-	require.Equal(t, http.StatusCreated, res.StatusCode)
-
-	res = testrestkit.DoJsonRequest(t, client, http.MethodPost, testrestkit.ApiUrl(t, baseUrl, "/api/iam/v1/accounts"), &input)
-	assert.Equal(t, http.StatusConflict, res.StatusCode)
+	res := testrestkit.DoJsonRequest(t, client, http.MethodPost, testrestkit.ApiUrl(t, baseUrl, "/api/iam/v1/accounts"), &idnInput)
+	assert.Equal(t, http.StatusNotFound, res.StatusCode)
 }
 
 func Test_Authenticate_NotFound(t *testing.T) {
 	creds := testiam.NewCredentials()
-	creds.Email = fmt.Sprintf("%s-notFound@test.com", runId)
+	creds.Email = fmt.Sprintf("%s-notFound2@test.com", runId)
 	creds.Password = "P4ssw0rd!13"
 
 	res := testrestkit.DoJsonRequest(t, client, http.MethodPost, testrestkit.ApiUrl(t, baseUrl, "/api/iam/v1/authenticate"), &creds)
-	require.Equal(t, http.StatusNotFound, res.StatusCode)
+	assert.Equal(t, http.StatusNotFound, res.StatusCode)
 }
