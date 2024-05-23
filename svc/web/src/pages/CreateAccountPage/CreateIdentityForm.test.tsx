@@ -23,6 +23,7 @@ test('CreateIdentityForm submit on button press', async () => {
     <CreateIdentityForm
       email={expected.credentials.email}
       code={expected.activationCode}
+      onChange={vi.fn()}
       onSubmit={onContinue} />
   );
 
@@ -59,6 +60,7 @@ test('CreateIdentityForm submit on enter', async () => {
     <CreateIdentityForm
       email={expected.credentials.email}
       code={expected.activationCode}
+      onChange={vi.fn()}
       onSubmit={onContinue} />
   );
 

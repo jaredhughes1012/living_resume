@@ -1,5 +1,6 @@
 import { Box, Button, TextField } from "@mui/material";
 import { IdentityInput } from "@types";
+import { useChangePropagator, useEnterHandler } from "@util/hooks";
 import { useCallback, useState } from "react";
 
 const styles = {
@@ -15,11 +16,12 @@ const styles = {
 
 interface Props {
   onSubmit: (input: IdentityInput) => void;
+  onChange: () => void;
   code: string;
   email: string;
 }
 
-const CreateIdentityForm: React.FC<Props> = ({ onSubmit, code, email }) => {
+const CreateIdentityForm: React.FC<Props> = ({ onSubmit, code, email, onChange }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [accountId, setAccountId] = useState("");
@@ -40,11 +42,12 @@ const CreateIdentityForm: React.FC<Props> = ({ onSubmit, code, email }) => {
     onSubmit(input);
   }, [code, email, firstName, lastName, password, accountId, onSubmit]);
 
-  const handleFirstNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value), []);
-  const handleLastNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setLastName(e.target.value), []);
-  const handleAccountIdChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setAccountId(e.target.value), []);
-  const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value), []);
-  const handleEnter = useCallback((e: React.KeyboardEvent) => e.key === "Enter" && handleSubmit(), [handleSubmit]);
+  const handleFirstNameChange = useChangePropagator(setFirstName, onChange);
+  const handleLastNameChange = useChangePropagator(setLastName, onChange);
+  const handleAccountIdChange = useChangePropagator(setAccountId, onChange);
+  const handlePasswordChange = useChangePropagator(setPassword, onChange);
+
+  const handleEnter = useEnterHandler(handleSubmit);
 
   return (
     <Box sx={{ width: 400 }}>

@@ -1,4 +1,5 @@
 import OrDivider from "@components/OrDivider";
+import { useChangePropagator, useEnterHandler } from "@util/hooks";
 import { Box, Button, Link, TextField, Typography } from "@mui/material";
 import { AccountInput } from "@types";
 import { useCallback, useState } from "react";
@@ -25,21 +26,16 @@ const styles = {
 
 interface Props {
   onContinue: (input: AccountInput) => void;
+  onChange: () => void;
 }
 
 // Form used to send an activation email to the user
-const SendEmailForm: React.FC<Props> = ({ onContinue }) => {
+const SendEmailForm: React.FC<Props> = ({ onContinue, onChange }) => {
   const [email, setEmail] = useState('');
 
   const handleContinue = useCallback(() => onContinue({ email }), [onContinue, email]);
-  const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value), []);
-
-  const handleEnter = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.stopPropagation();
-      handleContinue();
-    }
-  }, [handleContinue]);
+  const handleEmailChange = useChangePropagator(setEmail, onChange);
+  const handleEnter = useEnterHandler(handleContinue);
 
   return (
     <Box sx={styles.form}>

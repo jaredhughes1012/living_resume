@@ -11,7 +11,9 @@ test('SendEmailForm submit on button press', async () => {
   const onContinue = vi.fn();
   render(
     <MemoryRouter>
-      <SendEmailForm onContinue={onContinue} />
+      <SendEmailForm
+        onChange={vi.fn()}
+        onContinue={onContinue} />
     </MemoryRouter>
   );
 
@@ -28,7 +30,9 @@ test('SendEmailForm submit on enter', async () => {
   const onContinue = vi.fn();
   render(
     <MemoryRouter>
-      <SendEmailForm onContinue={onContinue} />
+      <SendEmailForm
+        onChange={vi.fn()}
+        onContinue={onContinue} />
     </MemoryRouter>
   );
 
