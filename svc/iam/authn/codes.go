@@ -16,7 +16,7 @@ const (
 
 // Generates activation codes for account creation
 type CodeGenerator interface {
-	Generate() (*iam.ActivationCode, error)
+	Generate(email string) (*iam.ActivationCode, error)
 }
 
 type codeGenerator struct {
@@ -24,14 +24,14 @@ type codeGenerator struct {
 }
 
 // Generate implements CodeGenerator.
-func (c *codeGenerator) Generate() (*iam.ActivationCode, error) {
+func (c *codeGenerator) Generate(email string) (*iam.ActivationCode, error) {
 	bi, err := rand.Int(rand.Reader, big.NewInt(int64(len(codeChars))))
 	if err != nil {
 		return nil, err
 	}
 
 	code := fmt.Sprintf("%0*d", codeLength, bi)
-	u, _ := url.Parse(fmt.Sprintf(`/api/iam/v1/accounts/activate?code=%s`, code))
+	u, _ := url.Parse(fmt.Sprintf(`/accounts/activate?code=%s&email=%s`, code, email))
 
 	return &iam.ActivationCode{
 		Code: code,

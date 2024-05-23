@@ -31,6 +31,9 @@
       "@types": [
         "./src/types.ts"
       ],
+      "@store/*": [
+        "./src/store/*"
+      ],
     }
   },
   "include": [

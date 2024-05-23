@@ -45,7 +45,7 @@ func (s *svc) InitiateAccountCreation(ctx context.Context, input iam.AccountInpu
 	}
 
 	log.Debug("Generating activation code")
-	code, err := s.codes.Generate()
+	code, err := s.codes.Generate(input.Email)
 	if err != nil {
 		return nil, err
 	} else if err = s.cache.CacheActivationCode(ctx, code.Code, input.Email); err != nil {
@@ -151,6 +151,6 @@ func StandardService(ctx context.Context) (Service, error) {
 		return nil, err
 	}
 
-	issuer := authn.NewJwtTokenIssuer([]byte(os.Getenv("JWT_SECRET")))
+	issuer := authn.NewJwtTokenIssuer([]byte(os.Getenv("JWT_HMAC_SECRET")))
 	return NewService(slog.Default(), db, issuer, cache, codes), nil
 }

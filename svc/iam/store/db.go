@@ -104,7 +104,11 @@ func (p postgresDb) MigrateUp(ctx context.Context) error {
 		return err
 	}
 
-	return m.Up()
+	if err := m.Up(); err == nil || err == migrate.ErrNoChange {
+		return nil
+	} else {
+		return err
+	}
 }
 
 // MigrateUp implements DB.
@@ -114,7 +118,11 @@ func (p postgresDb) MigrateDown(ctx context.Context) error {
 		return err
 	}
 
-	return m.Drop()
+	if err := m.Down(); err == nil || err == migrate.ErrNoChange {
+		return nil
+	} else {
+		return err
+	}
 }
 
 // Opens a new database connection

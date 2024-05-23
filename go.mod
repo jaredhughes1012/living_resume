@@ -20,6 +20,7 @@ require (
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/redis/go-redis/v9 v9.5.1 // indirect
+	github.com/rs/cors v1.11.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

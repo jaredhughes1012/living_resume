@@ -1,4 +1,4 @@
-import { Box, Theme } from "@mui/material";
+import { Box, Theme, Typography } from "@mui/material";
 
 const styles = {
   line: {
@@ -23,7 +23,8 @@ const OrDivider: React.FC<Props> = () => {
   return (
     <Box sx={styles.divider}>
       <Box sx={styles.line} />
-      <Box sx={styles.orText}>OR</Box>
+      <Typography fontSize={12}
+        sx={styles.orText}>OR</Typography>
       <Box sx={styles.line} />
     </Box>
   );

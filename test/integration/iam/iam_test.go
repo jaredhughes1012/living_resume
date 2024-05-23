@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/jaredhughes1012/living_resume/svc/iam"
@@ -51,6 +52,7 @@ func Test_AccountCreation(t *testing.T) {
 
 	res := testrestkit.DoJsonRequest(t, client, http.MethodPost, testrestkit.ApiUrl(t, baseUrl, "/api/iam/v1/accounts/initiate?debug=true"), &input)
 	code := testrestkit.RequireJsonResponse[iam.ActivationCode](t, res, http.StatusOK)
+	assert.True(t, strings.Contains(code.Url, input.Email))
 
 	idnInput := testiam.NewIdentityInput()
 	idnInput.AccountId = runId
