@@ -25,7 +25,6 @@ const CreateAccountPage: React.FC<Props> = () => {
     }).catch((err) => setError(getAxiosError(err, {})));
   }, [accountStore, navigate]);
 
-
   const code = params.get("code");
   const email = params.get("email");
 

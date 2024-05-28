@@ -5,6 +5,29 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Launch Web Browser",
+      "request": "launch",
+      "type": "chrome",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/svc/web/src",
+      "presentation": {
+        "hidden": true,
+      }
+    },
+    {
+      "name": "Launch Web",
+      "request": "launch",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "node-terminal",
+      "command": "pnpm dev",
+      "cwd": "${workspaceFolder}/svc/web",
+      "presentation": {
+        "hidden": true,
+      }
+    },
+    {
       "name": "Launch IAM",
       "type": "go",
       "request": "launch",
@@ -17,7 +40,21 @@
         "REDIS_CONNSTR": "localhost:6379",
         "CLIENT_URL": "http://localhost:5173",
         "IAM_MIGRATIONS_DIR": "file:${workspaceFolder}/scripts/migrations/iam",
+      },
+      "presentation": {
+        "hidden": true,
       }
     }
+  ],
+  "compounds": [
+    {
+      "name": "Launch",
+      "configurations": [
+        "Launch Web Browser",
+        "Launch Web",
+        "Launch IAM"
+      ],
+      "stopAll": true,
+    },
   ]
 }
