@@ -5,7 +5,6 @@ go 1.22.3
 require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golang-migrate/migrate/v4 v4.17.1
-	github.com/golang/mock v1.6.0
 	github.com/jaredhughes1012/restkit v0.1.3
 	github.com/lib/pq v1.10.9
 	github.com/redis/go-redis/v9 v9.5.1
