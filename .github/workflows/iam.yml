@@ -20,9 +20,8 @@ jobs:
 
       - name: Setup
         run: |
-          go get ./...
+          go mod download
           go install go.uber.org/mock/mockgen@latest
-          mockgen -version
           go generate ./...
 
       - name: Unit Test
