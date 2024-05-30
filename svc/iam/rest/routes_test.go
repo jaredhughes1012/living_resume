@@ -6,12 +6,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/jaredhughes1012/living_resume/svc/iam"
 	"github.com/jaredhughes1012/living_resume/svc/iam/rest/mockrest"
 	"github.com/jaredhughes1012/living_resume/svc/iam/testiam"
 	"github.com/jaredhughes1012/restkit/testrestkit"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func Test_CreateAccount(t *testing.T) {
