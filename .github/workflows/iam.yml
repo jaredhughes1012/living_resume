@@ -1,6 +1,7 @@
 name: IAM Service
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'svc/iam/**'
