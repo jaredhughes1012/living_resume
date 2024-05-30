@@ -1,5 +1,5 @@
 
-import { AccountInput, AuthData, Identity, IdentityInput } from '@types';
+import { AccountInput, AuthData, Credentials, Identity, IdentityInput } from '@types';
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import client from './api';
@@ -10,6 +10,7 @@ interface AccountState {
 
   initiateNewAccount: (input: AccountInput) => Promise<void>;
   createIdentity: (input: IdentityInput) => Promise<Identity>;
+  login: (input: Credentials) => Promise<Identity>;
 }
 
 const useAccountStore = create<AccountState>()(devtools(persist((set) => ({
@@ -29,6 +30,13 @@ const useAccountStore = create<AccountState>()(devtools(persist((set) => ({
     set(state => ({ ...state, authToken: res.data.authToken, identity: res.data.identity }));
     return res.data.identity;
   },
+
+  login: async (input: Credentials) => {
+    const res = await client.post<AuthData>('/api/iam/v1/authenticate', input);
+
+    set(state => ({ ...state, authToken: res.data.authToken, identity: res.data.identity }));
+    return res.data.identity;
+  }
 }), { name: 'account' })));
 
 export default useAccountStore;

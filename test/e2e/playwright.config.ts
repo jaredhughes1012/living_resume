@@ -6,8 +6,6 @@ import { defineConfig, devices } from '@playwright/test';
  */
 // require('dotenv').config();
 
-process.env.RUN_ID = process.env.RUN_ID || new Date().toISOString().replace(/[^0-9]/g, '');
-
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -34,19 +32,40 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
+    // Setup project
+    { name: 'setup', testMatch: /.*\.setup\.ts/ },
+
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      testMatch: /.*\.test\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        // Use prepared auth state.
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup'],
     },
 
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      testMatch: /.*\.test\.ts/,
+      use: {
+        ...devices['Desktop Firefox'],
+        // Use prepared auth state.
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup'],
     },
 
     {
       name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      testMatch: /.*\.test\.ts/,
+      use: {
+        ...devices['Desktop Safari'],
+        // Use prepared auth state.
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup'],
     },
 
     /* Test against mobile viewports. */

@@ -27,6 +27,10 @@ const NavRail: React.FC<Props> = () => {
     navigate("/signup");
   }, [navigate]);
 
+  const handleLogin = useCallback(() => {
+    navigate("/login");
+  }, [navigate]);
+
   return (
     <Box sx={styles.container}>
       <Box sx={{ flexGrow: 1 }} />
@@ -43,7 +47,8 @@ const NavRail: React.FC<Props> = () => {
       <Button
         variant="contained"
         color="inherit"
-        sx={styles.navButton}>
+        sx={styles.navButton}
+        onClick={handleLogin}>
         Log In
       </Button>
     </Box>

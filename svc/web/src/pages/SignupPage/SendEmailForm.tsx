@@ -1,6 +1,6 @@
 import OrDivider from "@components/OrDivider";
 import { useChangePropagator, useEnterHandler } from "@util/hooks";
-import { Box, Button, Link, TextField, Typography } from "@mui/material";
+import { Button, Link, TextField, Typography } from "@mui/material";
 import { AccountInput } from "@types";
 import { useCallback, useState } from "react";
 import { Link as RRLink } from "react-router-dom";
@@ -38,7 +38,7 @@ const SendEmailForm: React.FC<Props> = ({ onContinue, onChange }) => {
   const handleEnter = useEnterHandler(handleContinue);
 
   return (
-    <Box sx={styles.form}>
+    <>
       <TextField
         sx={styles.formItem}
         value={email}
@@ -59,7 +59,7 @@ const SendEmailForm: React.FC<Props> = ({ onContinue, onChange }) => {
       <Button variant="contained" color="inherit" sx={styles.formItem}>
         Other Signup Buttons Here
       </Button>
-    </Box>
+    </>
   );
 }
 
