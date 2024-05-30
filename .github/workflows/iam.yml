@@ -31,4 +31,4 @@ jobs:
         run: |
           docker compose up -d
           source ./test/integration/iam/source.sh
-          go test ./test/integration/iam_test.go
+          go test ./test/integration/iam
